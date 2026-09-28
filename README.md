@@ -5,7 +5,7 @@ A serverless stock management system designed for small retail stores (spaza sho
 ## System Architecture
 * **Frontend:** Static HTML/JavaScript interface hosted on **Amazon S3** (or delivered via Amazon CloudFront).
 * **API Layer:** **Amazon API Gateway** (HTTP API) routing requests to backend functions.
-* **Logic Layer:** **AWS Lambda** (Python 3.x) handling product creation, sales deductions, and restock threshold calculations.
+* **Logic Layer:** **AWS Lambda** (Python) handling product creation, sales deductions, and restock threshold calculations.
 * **Database:** **Amazon DynamoDB** (`SpazaInventory` table) storing product IDs, names, quantities, prices, and restock thresholds.
 
 ## Key Features
