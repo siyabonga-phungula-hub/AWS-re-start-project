@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaza Shop Stock Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; }
+        h1, h2 { color: #232f3e; }
+        .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        input { padding: 8px; margin-right: 5px; margin-bottom: 10px; }
+        button { background-color: #ff9900; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .alert { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Spaza Shop Management System</h1>
+
+    <!-- Add / Restock Product -->
+    <div class="section">
+        <h2>Add / Restock Product</h2>
+        <input type="text" id="prodId" placeholder="Product ID (e.g. MILK01)">
+        <input type="text" id="prodName" placeholder="Product Name">
+        <input type="number" id="prodQty" placeholder="Quantity">
+        <input type="number" step="0.01" id="prodPrice" placeholder="Price (R)">
+        <input type="number" id="prodThreshold" placeholder="Min Stock Threshold" value="5">
+        <button onclick="addProduct()">Save Stock</button>
+    </div>
+
+    <!-- Record Sale -->
+    <div class="section">
+        <h2>Record Sale</h2>
+        <input type="text" id="saleProdId" placeholder="Product ID">
+        <input type="number" id="saleQty" placeholder="Quantity Sold">
+        <button onclick="recordSale()">Record Sale</button>
+    </div>
+
+    <!-- Restock Alerts -->
+    <div class="section">
+        <h2>Items Needing Restock</h2>
+        <button onclick="checkRestock()">Check Restock Alerts</button>
+        <ul id="restockList" class="alert"></ul>
+    </div>
+
+    <!-- Inventory View -->
+    <div class="section">
+        <h2>Current Inventory</h2>
+        <button onclick="loadInventory()">Refresh Inventory</button>
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Stock Qty</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Replace with your API Gateway URL when deployed on AWS
+        const API_BASE_URL = "https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com";
+
+        async function addProduct() {
+            const data = {
+                product_id: document.getElementById('prodId').value,
+                product_name: document.getElementById('prodName').value,
+                quantity: document.getElementById('prodQty').value,
+                price: document.getElementById('prodPrice').value,
+                restock_threshold: document.getElementById('prodThreshold').value
+            };
+            await fetch(`${API_BASE_URL}/product`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            alert('Stock saved!');
+            loadInventory();
+        }
+
+        async function recordSale() {
+            const data = {
+                product_id: document.getElementById('saleProdId').value,
+                quantity_sold: document.getElementById('saleQty').value
+            };
+            const res = await fetch(`${API_BASE_URL}/sale`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (res.ok) alert('Sale recorded!');
+            else alert('Error: ' + result.error);
+            loadInventory();
+        }
+
+        async function checkRestock() {
+            const res = await fetch(`${API_BASE_URL}/restock`);
+            const data = await res.json();
+            const list = document.getElementById('restockList');
+            list.innerHTML = '';
+            data.restock_needed.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.product_name} (ID: ${item.product_id}) - Remaining: ${item.quantity}`;
+                list.appendChild(li);
+            });
+        }
+
+        async function loadInventory() {
+            const res = await fetch(`${API_BASE_URL}/inventory`);
+            const data = await res.json();
+            const tbody = document.querySelector('#inventoryTable tbody');
+            tbody.innerHTML = '';
+            data.inventory.forEach(item => {
+                const tr = `<tr>
+                    <td>${item.product_id}</td>
+                    <td>${item.product_name}</td>
+                    <td>${item.quantity}</td>
+                    <td>R${item.price}</td>
+                </tr>`;
+                tbody.innerHTML += tr;
+            });
+        }
+    </script>
+</body>
+</html>
